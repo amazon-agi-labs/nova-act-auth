@@ -30,6 +30,14 @@ from nova_act_auth.sso.callback.strategy import (
 
 _logger = logging.getLogger(__name__)
 
+# The callback pages are static: no scripts, plugins, forms or framing. They rely on an
+# inline <style> block and style="" attributes, so style-src must keep 'unsafe-inline'
+# (adding a nonce or hash to style-src would make browsers ignore it).
+# https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy
+_CONTENT_SECURITY_POLICY = (
+    "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+)
+
 
 # ---------------------------------------------------------------------------
 # Browser launcher
@@ -127,6 +135,8 @@ class _CallbackHandler(BaseHTTPRequestHandler):
         # Disable MIME sniffing.
         # https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Content-Type-Options
         self.send_header("X-Content-Type-Options", "nosniff")
+        # Forbid scripts as defense in depth against markup injection.
+        self.send_header("Content-Security-Policy", _CONTENT_SECURITY_POLICY)
         self.end_headers()
         self.wfile.write(html.encode("utf-8"))
 
