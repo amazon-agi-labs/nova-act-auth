@@ -6,6 +6,7 @@ used by all concrete callback implementations.
 
 from __future__ import annotations
 
+import html
 import logging
 import time
 from abc import ABC, abstractmethod
@@ -82,7 +83,12 @@ SSO_SUCCESS_HTML = f"""\
 
 
 def sso_error_html(message: str) -> str:
-    """Build an error page with the same styling as the success page."""
+    """Build an error page with the same styling as the success page.
+
+    ``message`` may carry attacker-controlled text (e.g. the
+    ``error_description`` query parameter), so it is HTML-escaped.
+    """
+    message = html.escape(message, quote=True)
     return f"""\
 <!DOCTYPE html>
 <html lang="en">
